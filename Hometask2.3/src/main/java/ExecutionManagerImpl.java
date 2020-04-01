@@ -2,10 +2,10 @@ public class ExecutionManagerImpl implements ExecutionManager {
 
     public Context execute(Runnable callback, Runnable... tasks) {
         Thread[] threads = new Thread[tasks.length];
-        createThreads(threads, tasks);
         ContextImpl context = new ContextImpl(threads);
-        for (Thread thread: threads) {
-            runTask(context, thread);
+        createThreads(threads, tasks, context);
+        for (Thread thread : threads) {
+            thread.start();
         }
         while (!context.isFinished()) {
             waitForContextToFinish();
@@ -14,23 +14,23 @@ public class ExecutionManagerImpl implements ExecutionManager {
         return context;
     }
 
-    private void waitForContextToFinish() {}
+    private void waitForContextToFinish() { }
 
-    private void runTask(ContextImpl context, Thread thread) {
-        try {
-            thread.run();
-        }
-        catch (Exception exc) {
-            System.out.println(exc);
-            context.fail();
-            thread.interrupt();
-        }
-    }
-
-    private void createThreads(Thread[] threads, Runnable[] tasks) {
+    private void createThreads(Thread[] threads, Runnable[] tasks, ContextImpl context) {
         int i = 0;
-        for (Runnable task: tasks) {
-            Thread thread = new Thread(task);
+        for (final Runnable task : tasks) {
+            Runnable synchronizedTask = () -> {
+                synchronized (task) {
+                    try {
+                        task.run();
+                    } catch (Exception exc) {
+                        System.out.println(exc);
+                        context.fail();
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            };
+            Thread thread = new Thread(synchronizedTask);
             threads[i++] = thread;
         }
     }
