@@ -23,7 +23,6 @@ public class Task<T> {
                 return result;
             }
         } catch (Exception e) {
-            System.out.println(e);
             throw this.e = new RuntimeException(e);
         }
     }
