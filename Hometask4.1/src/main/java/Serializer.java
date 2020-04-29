@@ -1,3 +1,3 @@
 public interface Serializer {
-    String serialize(Object o) throws IllegalAccessException;
+    String serialize(Object o);
 }
